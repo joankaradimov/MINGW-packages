@@ -1,0 +1,6 @@
+import win32api
+import win32con
+win32api.FormatMessage(win32con.FORMAT_MESSAGE_FROM_STRING, "Hello %1, how are you %9?", 0, 0, [])
+
+
+https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/set-se-translator?view=vs-2019

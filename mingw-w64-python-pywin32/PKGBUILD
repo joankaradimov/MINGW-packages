@@ -7,7 +7,7 @@ url='https://sourceforge.net/projects/pywin32'
 pkgdesc='Python for Windows Extensions (mingw-w64)'
 license=('PSF')
 arch=('any')
-pkgver=225
+pkgver=226
 pkgrel=1
 makedepends=(${MINGW_PACKAGE_PREFIX}-python2 ${MINGW_PACKAGE_PREFIX}-python2-setuptools
              ${MINGW_PACKAGE_PREFIX}-python3 ${MINGW_PACKAGE_PREFIX}-python3-setuptools
@@ -19,13 +19,15 @@ source=("https://github.com/mhammond/${_realname}/archive/b${pkgver}.zip"
         001-compile-and-setup-fixes.patch
         002-min-max.patch
         003-dependency-fixes.patch
-        004-seh.patch)
-sha256sums=('4fe036b83caf8cfb1fcbf6cf98b82a11ab1e41d2b652121d0a4395b5e9deeb46'
+        004-seh.patch
+        005-various.patch)
+sha256sums=('04059e61f519e1f911014ca512bd25c5bfbc1142719e4f933c6a8c3aa9d016d1'
             '03f8c0372059bb5b1933d77309101c67fa08504b42a6fce1186ed9a29e0c271f'
             '071b119512ee06ea9008b96f83f6a38fdbcd55266758e169da64340861f29c3b'
             '0dc953883a2917f1eddb93f1615db9749b5f758664ec539a4bf2a96f11087524'
             '0013d3bb9b10511f28e5e71fa59b0431445a5cfc5ae7950e33251af14a087f5f'
-            '726ab045a127c98bd431f6840a7f63042668e61fa5d22834af4e5f8a2ea4cf70')
+            '726ab045a127c98bd431f6840a7f63042668e61fa5d22834af4e5f8a2ea4cf70'
+            'SKIP')
 
 prepare() {
     cd "${srcdir}/${_realname}-b${pkgver}"
@@ -33,6 +35,8 @@ prepare() {
     patch -p1 < "${startdir}"/002-min-max.patch
     patch -p1 < "${startdir}"/003-dependency-fixes.patch
     patch -p1 < "${startdir}"/004-seh.patch
+    patch -p1 < "${startdir}"/005-various.patch
+    mv com/win32comext/axscript/src/GUIDS.CPP com/win32comext/axscript/src/GUIDS.cpp
 }
 
 build() {
@@ -40,7 +44,8 @@ build() {
         msg2 "Synchronizing ${_python} build directory"
         rsync --recursive --times "${srcdir}/${_realname}-b${pkgver}"/* "${srcdir}/build-${_python}-${CARCH}-${_realname}-${pkgver}"
         cd "${srcdir}/build-${_python}-${CARCH}-${_realname}-${pkgver}"
-        CFLAGS="-Wno-narrowing -fno-operator-names -fpermissive -include ../seh.h -DCRYPT_DECRYPT_MESSAGE_PARA_HAS_EXTRA_FIELDS" \
+
+        CFLAGS="-Wno-write-strings -Wno-narrowing -fno-operator-names -fpermissive -include ../seh.h -DCRYPT_DECRYPT_MESSAGE_PARA_HAS_EXTRA_FIELDS" \
         LIB="${MINGW_PREFIX}/lib:${MINGW_PREFIX}/${CARCH}-w64-mingw32/lib" \
         INCLUDE="${MINGW_PREFIX}/include:${MINGW_PREFIX}/${CARCH}-w64-mingw32/include" \
         ${MINGW_PREFIX}/bin/${_python} setup.py build --compiler=mingw32
@@ -53,6 +58,7 @@ _package() {
     DISTUTILS_DEBUG=1 \
     MSYS2_ARG_CONV_EXCL="--prefix=;--install-scripts=;--install-platlib=" \
     ${MINGW_PREFIX}/bin/${_python} setup.py install \
+        --skip-build \
         --prefix=${MINGW_PREFIX} \
         --root="${pkgdir}" \
         --optimize=1

@@ -1,0 +1,45 @@
+# Maintainer: Joan Karadimov <joan.karadimov@gmail.com>
+
+_realname=emscripten
+pkgname=${MINGW_PACKAGE_PREFIX}-${_realname}
+pkgver=1.38.22
+pkgrel=1
+pkgdesc="LLVM-based project that compiles C and C++ into highly-optimizable JavaScript for the web"
+arch=('any')
+url="http://emscripten.org"
+license=('custom')
+depends=(${MINGW_PACKAGE_PREFIX}-nodejs ${MINGW_PACKAGE_PREFIX}-python2 ${MINGW_PACKAGE_PREFIX}-binaryen
+         ${MINGW_PACKAGE_PREFIX}-llvm ${MINGW_PACKAGE_PREFIX}-lld ${MINGW_PACKAGE_PREFIX}-clang)
+makedepends=(cmake ${MINGW_PACKAGE_PREFIX}-libxml2 git)
+optdepends=('java-environment: for using clojure'
+            'ruby: for using websockify addon'
+            'cmake: for emcc --show-ports')
+install=emscripten.install
+source=(git+https://github.com/emscripten-core/emscripten.git#tag=$pkgver
+        "emscripten.sh")
+sha512sums=('SKIP'
+            'fbe9b95b8d18e7d0c6ec5fded6f11b72fbe4ddd0391e5704b281ba79c479f3563e82423b790ddf3f0554a23d659193ca898a81fe3db509f16c30c7188b790e4d')
+
+prepare() {
+  cd "$srcdir"/emscripten
+
+  sed -i 's|EMSCRIPTEN_ROOT.*|EMSCRIPTEN_ROOT = "$MINGW_PREFIX/lib/emscripten"|g' tools/settings_template_readonly.py
+  sed -i 's|BINARYEN_ROOT.*|BINARYEN_ROOT = os.path.expanduser(os.getenv("MINGW_PREFIX", ""))|g' tools/settings_template_readonly.py
+}
+
+package() {
+  install -d "$pkgdir"/usr/lib
+
+  # Install emscripten
+  cd "$srcdir"/emscripten
+  install -d "$pkgdir"/usr/lib/emscripten
+  cp -rup em* cmake site src system third_party tools "$pkgdir"/usr/lib/emscripten
+
+  # Remove clutter
+  rm "$pkgdir"/usr/lib/emscripten/*.bat
+
+  install -d "$pkgdir"/usr/share/doc
+  # ln -s /usr/lib/emscripten/site/source/docs "$pkgdir"/usr/share/doc/$pkgname
+  install -Dm755 "$srcdir"/emscripten.sh "$pkgdir"/etc/profile.d/emscripten.sh
+  install -Dm644 LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+}
