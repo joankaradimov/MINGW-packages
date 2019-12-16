@@ -52,6 +52,7 @@ build() {
   mkdir -p "${srcdir}/build-${MINGW_CHOST}"
   cd "build-${MINGW_CHOST}"
 
+  # export HARDENING_PIE=0 make
   LDFLAGS+=" -fstack-protector"
 
   ../${_realname}-${pkgver}/configure \
@@ -59,7 +60,8 @@ build() {
     --build="${MINGW_CHOST}" \
     --with-modules \
     --without-dbus \
-    --without-compress-install
+    --without-compress-install \
+    CFLAGS='-O3 -march=native -flto -fno-use-linker-plugin -fno-builtin-stpcpy -no-pie' # -flto-partition=none  -fwhole-program  -Wl,--allow-multiple-definition
 
   # --without-compress-install is needed because we don't have gzip in
   # the mingw binaries.
